@@ -41,6 +41,7 @@ local function receiveheaders(sock, headers)
     line, err = sock:receive()
     if err then return nil, err end
     -- headers go until a blank line is found
+    local cookies = {}
     while line ~= "" do
         -- get field-name and value
         name, value = socket.skip(2, string.find(line, "^(.-):%s*(.*)"))
@@ -56,9 +57,14 @@ local function receiveheaders(sock, headers)
             if err then return nil, err end
         end
         -- save pair in table
-        if headers[name] then headers[name] = headers[name] .. ", " .. value
-        else headers[name] = value end
+        if name == 'set-cookie' then
+            table.insert(cookies, value)
+        else
+            if headers[name] then headers[name] = headers[name] .. ", " .. value
+            else headers[name] = value end
+        end
     end
+    headers['set-cookie'] = cookies
     return headers
 end
 
